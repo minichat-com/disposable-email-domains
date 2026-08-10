@@ -19,9 +19,7 @@ task :collect_deleted_domains do
   base_ref = ENV.fetch("BASE_REF", "master")
 
   base_domains = `git show #{base_ref}:domains.txt 2>/dev/null`.split("\n").to_set
-  if base_domains.empty?
-    abort "Could not read domains.txt from ref '#{base_ref}'"
-  end
+  abort "Could not read domains.txt from ref '#{base_ref}'" if base_domains.empty?
 
   current_domains = File.read("domains.txt").split("\n").to_set
 
@@ -34,7 +32,7 @@ task :collect_deleted_domains do
     puts "No new deleted domains found since #{base_ref}."
   else
     updated = (existing | new_deletions).sort
-    File.write("deleted_domains.txt", updated.join("\n") + "\n")
+    File.write("deleted_domains.txt", "#{updated.join("\n")}\n")
     puts "Added #{new_deletions.size} domain(s) to deleted_domains.txt (#{updated.size} total)"
   end
 end
