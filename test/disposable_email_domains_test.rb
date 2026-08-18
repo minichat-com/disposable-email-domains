@@ -38,4 +38,39 @@ class DisposableEmailDomainsTest < Minitest::Test
     assert DisposableEmailDomains.include? "bot@protonmail.com"
     assert DisposableEmailDomains.include? "bot@proton.me"
   end
+
+  def test_wildcard_matches_apex_domain
+    assert DisposableEmailDomains.include? "bot@xwwei.com"
+    assert DisposableEmailDomains.include? "bot@yaobba.com"
+  end
+
+  def test_wildcard_matches_subdomains
+    assert DisposableEmailDomains.include? "bot@mail.xwwei.com"
+    assert DisposableEmailDomains.include? "bot@a.b.xwwei.com"
+    assert DisposableEmailDomains.include? "bot@mail.yaobba.com"
+  end
+
+  def test_wildcard_does_not_match_lookalike_domains
+    refute DisposableEmailDomains.include? "bot@notxwwei.com"
+    refute DisposableEmailDomains.include? "bot@xwwei.com.attacker.com"
+  end
+
+  def test_wildcard_does_not_match_subdomains_of_unlisted_domains
+    refute DisposableEmailDomains.include? "someone@mail.gmail.com"
+    refute DisposableEmailDomains.include? "someone@mail.yahoo.com"
+  end
+
+  def test_wildcard_set
+    assert_kind_of Set, DisposableEmailDomains.wildcard_set
+    refute_empty DisposableEmailDomains.wildcard_set
+
+    DisposableEmailDomains.wildcard_set.each do |domain|
+      refute_match(/[*@\s]/, domain)
+      assert_operator domain.count("."), :>=, 1, "#{domain} must have at least two labels"
+    end
+  end
+
+  def test_wildcard_entries_are_part_of_the_full_set
+    assert_operator DisposableEmailDomains.set, :>=, DisposableEmailDomains.wildcard_set
+  end
 end
